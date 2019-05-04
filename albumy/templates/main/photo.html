@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% from 'bootstrap/form.html' import render_form %}
+{% from 'bootstrap/pagination.html' import pagination %}
+
+{% block title %}{{ photo.author.name }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-6">
+        <div class="photo">
+            <a href="{{ url_for('.get_image', filename=photo.filename) }}" target="_blank">
+                <img class="img-fluid" src="{{ url_for('.get_image', filename=photo.filename_m) }}">
+            </a>
+        </div>
+        <a class="btn btn-light btn-sm" data-toggle="modal" data-target="#shareModal">Share</a>
+        <p class="text-muted float-right small">
+            <span class="oi oi-clock">Upload at {{ moment(photo.timestamp).format('LL') }}</span>
+        </p>
+        {% include 'main/_comments.html' %}
+    </div>
+    <div class="col-md-4">
+        {% include 'main/_photo_sidebar.html' %}
+    </div>
+</div>
+<!-- share modal -->
+{% if current_user == photo.author %}
+    <a class="btn btn-danger btn-sm text-white" data-toggle="#confirm-delete" data-href="{{ url_for('.delete_photo', photo_id=photo.id) }}">
+        Delete
+    </a>
+{% endif %}
+{% if current_user.is_authenticated %}
+    <div class="modal fade" id="confirm-delete" tabindex="-1" role="dialog" aria-labelledby="confirmModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-sm">
+            <div class="modal-header">
+                <h5 class="modal-title" id="confirmModalLabel">Delete Confirm</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete this item?</p>
+            </div>
+            <div class="modal-footer">
+                <form class="delete-form" action="" method="post">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">
+                        Cancel
+                    </button>
+                    <button class="btn btn-danger btn-confirm" type="submit">Delete</button>
+                </form>
+            </div>
+        </div>
+
+    </div>
+{% endif %}
+{% endblock %}
