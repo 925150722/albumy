@@ -1,0 +1,14 @@
+
+<div class="dropdown">
+    <button class="btn btn-secondary btn-sm" type="button" id="dropdownMenuButton" data-toggle="dropdown"
+        aria-haspopup="true" aria-expanded="false">Order By {{ order_rule }}
+        <span class="oi oi-elevator"></span>
+    </button>
+    <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+        {% if order_rule == 'collects' %}
+            <a class="dropdown-item" href="{{ url_for('.show_tag', tag_id=tag.id, order='by_time') }}">Order By Time</a>
+        {% else %}
+            <a class="dropdown-item" href="{{ url_for('.show_tag', tag_id=tag.id, order='by_collects') }}">Order By Collects</a>
+        {% endif %}
+    </div>
+</div>

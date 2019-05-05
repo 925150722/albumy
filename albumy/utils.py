@@ -1,5 +1,5 @@
 
-from flask import current_app, request, redirect
+from flask import current_app, request, redirect, flash
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
 from itsdangerous import BadSignature, SignatureExpired
 
@@ -66,3 +66,9 @@ def resize_image(image, filename, base_width):
     filename += current_app.config['ALBUMY_PHOTO_SUFFIX'][base_width] + ext
     img.save(os.path.join(current_app.config['ALBUMY_UPLOAD_PATH'], filename), optimize=True, quality=85)
     return filename
+
+
+def flash_errors(form):
+    for field, errors in form.errors.items():
+        for error in errors:
+            flash(u'Error in the %s field - %s' % (getattr(form, field).label.text, error))
