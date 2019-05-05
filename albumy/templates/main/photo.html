@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 {% from 'bootstrap/form.html' import render_form %}
 {% from 'bootstrap/pagination.html' import pagination %}
+{% from 'macros.html' import render_field %}
 
 {% block title %}{{ photo.author.name }}{% endblock %}
 

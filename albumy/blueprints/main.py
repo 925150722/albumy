@@ -131,11 +131,11 @@ def edit_description(photo_id):
     form = DescriptionForm()
     if form.validate_on_submit():
         photo.description = form.description.data
-        db.sesion.commit()
+        db.session.commit()
         flash('Description update.', 'success')
 
     flash_errors(form)
-    return redirect(url_for('.show+photo', photo_id=photo_id))
+    return redirect(url_for('.show_photo', photo_id=photo_id))
 
 
 @main_bp.route('/photo/<int:photo_id>/tag/new', methods=['POST'])
