@@ -190,7 +190,7 @@ def show_tag(tag_id, order):
     pagination = Photo.query.with_parent(tag).order_by(Photo.timestamp.desc()).paginate(page, per_page)
     photos = pagination.items
 
-    if order_rule == 'by_collects':
+    if order == 'by_collects':
         photos.sort(key=lambda x: len(x.collectors), reverse=True)
         order_rule = 'collects'
 

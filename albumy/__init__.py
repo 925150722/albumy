@@ -6,6 +6,7 @@ from albumy.blueprints.auth import auth_bp
 from albumy.blueprints.main import main_bp
 from albumy.blueprints.user import user_bp
 from albumy.blueprints.ajax import ajax_bp
+from albumy.blueprints.admin import admin_bp
 from albumy.settings import config
 from albumy.extensions import mail, moment, ckeditor, bootstrap, db, migrate, csrf, login_manager, dropzone, avatars
 from albumy.models import Role
@@ -49,6 +50,7 @@ def register_blueprints(app):
     app.register_blueprint(main_bp)
     app.register_blueprint(user_bp, url_prefix='/user')
     app.register_blueprint(ajax_bp, url_prefix='/ajax')
+    app.register_blueprint(admin_bp, url_prefix='/admin')
 
 
 def register_shell_context(app):
