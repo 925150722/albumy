@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% from 'bootstrap/form.html' import render_form %}
-{% from 'bootstrap/pagination.html' import pagination %}
-{% from 'macros.html' import render_field %}
+{% from 'bootstrap/pagination.html' import render_pagination %}
+{% from 'bootstrap/form.html' import render_field %}
 
 {% block title %}{{ photo.author.name }}{% endblock %}
 
@@ -86,6 +86,14 @@
         $("#cancel-description").click(function () {
            $("#description-form").hide();
            $("#description").show()
+        });
+        $("#tag-btn").click(function () {
+           $("#tags").hide();
+           $("#tag-form").show();
+        });
+        $("#cancel-tag").click(function () {
+           $("#tag-form").hide();
+           $("#tags").show()
         });
     </script>
 {% endblock %}

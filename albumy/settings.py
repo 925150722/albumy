@@ -42,6 +42,8 @@ class BaseConfig:
     AVATARS_SIZE_TUPLE = (30, 100, 200)
 
     ALBUMY_PHOTO_PER_PAGE = 12
+    ALBUMY_USER_PER_PAGE = 12
+
 
 class DevelopmentConfig(BaseConfig):
     SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(basedir, 'data-dev.db')

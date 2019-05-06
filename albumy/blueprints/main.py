@@ -4,10 +4,10 @@ from flask import Blueprint, request, current_app, render_template, send_from_di
 from flask_dropzone import random_filename
 from flask_login import login_required, current_user
 from albumy.decorators import confirm_required, permission_required
-from albumy.models import Photo, Tag
+from albumy.models import Photo, Tag, Comment, Collect
 from albumy.extensions import db
 from albumy.utils import resize_image, flash_errors
-from albumy.forms.main import DescriptionForm, TagForm
+from albumy.forms.main import DescriptionForm, TagForm, CommentForm
 
 
 main_bp = Blueprint('main', __name__)
@@ -68,9 +68,18 @@ def get_image(filename):
 @main_bp.route('/photo/<int:photo_id>')
 def show_photo(photo_id):
     photo = Photo.query.get_or_404(photo_id)
+    page = request.args.get('page', 1, type=int)
+    per_page = current_app.config['ALBUMY_COMMENT_PER_PAGE']
+    pagination = Comment.query.with_parent(photo).order_by(Comment.timestamp.desc()).paginate(page, per_page)
+    comments = pagination.items
+
     description_form = DescriptionForm()
+    tag_form = TagForm()
+    comment_form = CommentForm()
+
     description_form.description.data = photo.description
-    return render_template('main/photo.html', photo=photo, description_form=description_form)
+    return render_template('main/photo.html', photo=photo, description_form=description_form, tag_form=tag_form,
+                           comment_form=comment_form, pagination=pagination, comments=comments)
 
 
 @main_bp.route('/phone/n/<int:photo_id>')
@@ -197,5 +206,100 @@ def show_tag(tag_id, order):
     return render_template('main/tag.html', tag=tag, pagination=pagination, photos=photos, order_rule=order_rule)
 
 
+@main_bp.route('/set-comment/<int:photo_id>', methods=['POST'])
+def set_comment(photo_id):
+    photo = Photo.query.get_or_404(photo_id)
+
+    if photo is None:
+        abort(403)
+
+    if photo.can_comment:
+        photo.can_comment = False
+    else:
+        photo.can_comment = True
+
+    db.session.commit()
+    return redirect(url_for('.show_photo', photo_id=photo_id))
+
+
+@main_bp.route('/photo/<int:photo_id>/comment/new', methods=['GET', 'POST'])
+def new_comment(photo_id):
+    photo = Photo.query.get_or_404(photo_id)
+    page = request.args.get('page', 1, type=int)
+    form = CommentForm()
+    if form.validate_on_submit():
+        body = body=form.body.data
+        author = current_user._get_current_object()
+        comment = Comment(body=body, author=author, photo=photo)
+        replied_id = request.args.get('reply')
+
+        if replied_id:
+            comment.replied = Comment.query.get_or_404(replied_id)
+            # if comment.replied.author.receive_comment_notification:
+            #     push_comment_notification(photo_id=photo.id, receive=comment.replied.author)
+            #
+            # if current_user != photo.author and photo.author.receive_comment_notification:
+            #     push_comment_notification(photo_id, receiver=photo.author, page=page)
+
+        db.session.add(comment)
+        db.session.commit()
+        flash('Comment published.', 'success')
+
+    flash_errors(form)
+    return redirect(url_for('.show_photo', photo_id=photo.id))
+
+
+@main_bp.route('/delete/comment/<int:comment_id>')
+def delete_comment(comment_id):
+    comment = Comment.query.get_or_404(comment_id)
+
+    if current_user != comment.author and current_user != comment.photo.author and not current_user.can('MODERATE'):
+        abort(403)
+
+    db.session.delete(comment)
+    db.session.commit()
+    flash('Comment deleted.', 'success')
+    return redirect(url_for('.show_photo', photo_id=comment.photo_id))
+
+
+@main_bp.route('/collect/<int:photo_id>', methods=['POST'])
+@login_required
+@confirm_required
+@permission_required('COLLECT')
+def collect(photo_id):
+    photo = Photo.query.get_or_404(photo_id)
+
+    if current_user.is_collecting(photo):
+        flash('Already collected.', 'info')
+        return redirect(url_for('.show_photo', photo_id=photo_id))
+
+    current_user.collect(photo)
+    flash('Photo collected.', 'success')
+    return redirect(url_for('.show_photo', photo_id=photo_id))
+
+
+@main_bp.route('/uncollect/<int:photo_id>', methods=['POST'])
+@login_required
+def uncollect(photo_id):
+    photo = Photo.query.get_or_404(photo_id)
+
+    if not current_user.is_collecting(photo):
+        flash('Not collect yet.', 'info')
+        return redirect(url_for('.show_photo', photo_id=photo_id))
+
+    current_user.uncollect(photo)
+    flash('Photo uncollected.', 'info')
+    return redirect(url_for('.show_photo', photo_id=photo_id))
+
+
+@main_bp.route('/photo/<int:photo_id>/collectors')
+def show_collectors(photo_id):
+    photo = Photo.query.get_or_404(photo_id)
+    page = request.args.get('page', 1, type=int)
+    per_page = current_app.config['ALBUMY_USER_PER_PAGE']
+    pagination = Collect.query.with_parent(photo).order_by(Collect.timestamp.asc()).paginate(page, per_page)
+    collects = pagination.items
+
+    return render_template('main/collectors.html', collects=collects, photo=photo, pagination=pagination)
 
 

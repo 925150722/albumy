@@ -21,12 +21,13 @@
                 <a href="https://www.google.com/maps?q={{ user.location }}" target="_blank">{{ user.location|truncate(20) }}</a>&nbsp;&nbsp;
             {% endif %}
             <span class="oi oi-calendar"></span>
-            Joined {{ moment(user.member_since).format('LL') }}
+{#            Joined {{ moment(user.member_since).format('LL') }}#}
         </p>
     </div>
 </div>
 <div class="user-nav">
     <ul class="nav nav-tabs">
         {{ render_nav_item('user.index', 'Photo', user.photos|length, username=user.username) }}
+        {{ render_nav_item('user.show_collections', 'Collections', user.collections|length, username=user.username) }}
     </ul>
 </div>

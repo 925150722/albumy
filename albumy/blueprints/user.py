@@ -1,6 +1,6 @@
 
 from flask import Blueprint, request, current_app, render_template
-from albumy.models import User, Photo
+from albumy.models import User, Photo, Collect
 
 
 user_bp = Blueprint('user', __name__)
@@ -19,3 +19,15 @@ def index(username):
 @user_bp.route('/edit_profile')
 def edit_profile():
     return 'edit_profile'
+
+
+@user_bp.route('/<username>/collections')
+def show_collections(username):
+    user = User.query.filter_by(username=username).first()
+    page = request.args.get('page', 1, type=int)
+    per_page = current_app.config['ALBUMY_PHOTO_PER_PAGE']
+    pagination = Collect.query.with_parent(user).order_by(Collect.timestamp.desc()).paginate(page, per_page)
+    collects = pagination.items
+    return render_template('user/collections.html', collects=collects, user=user, pagination=pagination)
+
+
