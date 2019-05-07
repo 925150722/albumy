@@ -4,10 +4,11 @@ from flask import Blueprint, request, current_app, render_template, send_from_di
 from flask_dropzone import random_filename
 from flask_login import login_required, current_user
 from albumy.decorators import confirm_required, permission_required
-from albumy.models import Photo, Tag, Comment, Collect
+from albumy.models import Photo, Tag, Comment, Collect, Notification
 from albumy.extensions import db
 from albumy.utils import resize_image, flash_errors
 from albumy.forms.main import DescriptionForm, TagForm, CommentForm
+from albumy.notifications import push_comment_notification, push_collect_notification
 
 
 main_bp = Blueprint('main', __name__)
@@ -228,18 +229,18 @@ def new_comment(photo_id):
     page = request.args.get('page', 1, type=int)
     form = CommentForm()
     if form.validate_on_submit():
-        body = body=form.body.data
+        body = form.body.data
         author = current_user._get_current_object()
         comment = Comment(body=body, author=author, photo=photo)
         replied_id = request.args.get('reply')
 
         if replied_id:
             comment.replied = Comment.query.get_or_404(replied_id)
-            # if comment.replied.author.receive_comment_notification:
-            #     push_comment_notification(photo_id=photo.id, receive=comment.replied.author)
-            #
-            # if current_user != photo.author and photo.author.receive_comment_notification:
-            #     push_comment_notification(photo_id, receiver=photo.author, page=page)
+            if comment.replied.author.receive_comment_notification:
+                push_comment_notification(photo_id=photo.id, receiver=comment.replied.author)
+
+            if current_user != photo.author and photo.author.receive_comment_notification:
+                push_comment_notification(photo_id, receiver=photo.author, page=page)
 
         db.session.add(comment)
         db.session.commit()
@@ -274,6 +275,7 @@ def collect(photo_id):
         return redirect(url_for('.show_photo', photo_id=photo_id))
 
     current_user.collect(photo)
+    push_collect_notification(collector=current_user, photo_id=photo_id, receiver=photo.user)
     flash('Photo collected.', 'success')
     return redirect(url_for('.show_photo', photo_id=photo_id))
 
@@ -303,3 +305,15 @@ def show_collectors(photo_id):
     return render_template('main/collectors.html', collects=collects, photo=photo, pagination=pagination)
 
 
+@main_bp.route('/notifications')
+@login_required
+def show_notification():
+    page = request.args.get('page', 1, type=int)
+    per_page = current_app.congif['ALBUMY_NOTIFICATION_PER_PAGE']
+    notifications = Notification.query.with_parent(current_user)
+    filter_rule = request.args.get('filter')
+    if filter_rule == 'unread':
+        notifications = notifications.filter_by(is_read=False)
+    pagination = notifications.order_by(Notification.timestamp.desc()).paginate(page, per_page)
+    notifications = pagination.items
+    return render_template('main/notifications.html', pagination=pagination, notifications=notifications)

@@ -19,6 +19,7 @@
         <h6>
             <a href="{{ url_for('user.index', username=user.username) }}">{{ user.name }}</a>
         </h6>
+        {{ follow_area(user) }}
     </div>
 {% endmacro %}
 

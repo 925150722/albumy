@@ -4,6 +4,7 @@ from flask_login import login_required, current_user
 from albumy.models import User, Photo, Collect
 from albumy.decorators import confirm_required, permission_required
 from albumy.utils import redirect_back
+from albumy.notifications import push_follow_notification
 
 
 user_bp = Blueprint('user', __name__)
@@ -44,6 +45,7 @@ def follow(username):
         flash('Already followed.', 'info')
         return redirect(url_for('.index', username=username))
     current_user.follow(user)
+    push_follow_notification(follower=current_user, receiver=user)
     flash('User followed.', 'success')
     return redirect_back()
 
@@ -59,4 +61,23 @@ def unfollow(username):
     flash('User followed.', 'info')
     return redirect_back()
 
+
+@user_bp.route('/<username>/followers')
+def show_followers(username):
+    user = User.query.filter_by(username=username).first_or_404()
+    page = request.args.get('page', 1, type=int)
+    per_page = current_app.config['ALBUMY_USER_PER_PAGE']
+    pagination = user.followers.paginate(page, per_page)
+    follows = pagination.items
+    return render_template('user/show_followers.html', user=user, pagination=pagination, follows=follows)
+
+
+@user_bp.route('/<username>/following')
+def show_following(username):
+    user = User.query.filter_by(username=username).first_or_404()
+    page = request.args.get('page', 1, type=int)
+    per_page = current_app.config['ALBUMY_USER_PER_PAGE']
+    pagination = user.following.paginate(page, per_page)
+    follows = pagination.items
+    return render_template('user/show_following.html', user=user, pagination=pagination, follows=follows)
 

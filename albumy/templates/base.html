@@ -82,6 +82,12 @@
                         {% endif %}
                     </div>
                 </div>
+                <a class="nav-item nav-link" href="{{ url_for('main.show_notifications', filter='unread') }}">
+                    <span class="oi oi-bell"></span>
+                    {% if notifications.count() != 0 %}
+                        <span class="badge badge-danger badge-notification">{{ notification_count }}</span>
+                    {% endif %}
+                </a>
             </div>
         </nav>
     {% endblock navbar %}

@@ -10,5 +10,36 @@
             <strong>{{ user.photos|length }}</strong>Photos
         </a>
     </p>
+    <p class="text-muted">{{ user.username }}
+        {% if current_user.is_authenticated %}
+            {% if current_user != user and current_user.is_followed_by(user) %}
+                {% if user.is_followed_by(current_user) %}
+                    <span class="badge badge-light">Follow each other</span>
+                {% else %}
+                    <span class="badge badge-light">Follow you</span>
+                {% endif %}
+            {% endif %}
+        {% endif %}
+    </p>
     <a href="{{ url_for('user.index', username=user.username) }}" class="btn btn-light btn-sm">HomePage</a>
+    {% if current_user.is_authenticated %}
+        {% if user != current_user %}
+            <button data-id="{{ user.id }}" data-href="{{ url_for('ajax.unfollow', username=user.username) }}"
+                class="{% if not current_user.is_following(user) %}hide{% endif %} btn bnt-dark btn-sm unfollow-btn">
+                Unfollow
+            </button>
+            <button data-id="{{ user.id }}" data-href="{{ usr_for('ajax.follow', username=user.username) }}"
+                class="{% if current_user.following(user) %}hide{% endif %} btn btn-primary btn-sm follow-btn">
+                Follow
+            </button>
+        {% endif %}
+    {% else %}
+        <form class="inline" method="post" action="{{ url_for('user.follow', username=user.username) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-primary bnt-sm">Follow</button>
+        </form>
+    {% endif %}
+    <a href="{{ url_for('user.show_followers', username=user.username) }}">
+        <strong>{{ user.followers.count() - 1 }}</strong>Followers
+    </a>
 </div>
