@@ -1,0 +1,11 @@
+
+<div class="nav nav-pills flex-column" role="tablist" aria-orientation="vertical">
+    <a class="nav-item nav-link {% if request.args.get('filter') != 'unread' %}
+        active{% endif %}" href="{{ url_for('.show_notifications', filter='all') }}">
+        All
+    </a>
+    <a class="nav-item nav-link {% if request.args.get('filter') == 'unread' %}
+        active{% endif %}" href="{{ url_for('.show_notifications', filter='unread') }}">
+        Unread
+    </a>
+</div>

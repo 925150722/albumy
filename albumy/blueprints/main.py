@@ -51,11 +51,6 @@ def upload():
     return render_template('main/upload.html')
 
 
-@main_bp.route('/show_notifications/<filter>')
-def show_notifications(filter):
-    return 'show_notifications'
-
-
 @main_bp.route('/avatars/<path:filename>')
 def get_avatar(filename):
     return send_from_directory(current_app.config['AVATARS_SAVE_PATH'], filename)
@@ -307,7 +302,7 @@ def show_collectors(photo_id):
 
 @main_bp.route('/notifications')
 @login_required
-def show_notification():
+def show_notifications():
     page = request.args.get('page', 1, type=int)
     per_page = current_app.congif['ALBUMY_NOTIFICATION_PER_PAGE']
     notifications = Notification.query.with_parent(current_user)
@@ -317,3 +312,23 @@ def show_notification():
     pagination = notifications.order_by(Notification.timestamp.desc()).paginate(page, per_page)
     notifications = pagination.items
     return render_template('main/notifications.html', pagination=pagination, notifications=notifications)
+
+
+@main_bp.route('/notification/read/<int:notification_id>', methods=['POST'])
+def read_notification(notification_id):
+    notification = Notification.query.get_or_404(notification_id)
+    if current_user != notification.receiver:
+        abort(403)
+    notification.is_read = True
+    db.session.commit()
+    flash('Notification archived.', 'success')
+    return redirect(url_for('.show_notifications'))
+
+
+@main_bp.route('/notifications/read/all', methods=['POST'])
+def read_all_notifications():
+    for notification in current_user.notifications:
+        notification.is_read = True
+    db.session.commit()
+    flash('All notification archived.', 'success')
+    return redirect(url_for('.show_notifications'))

@@ -84,9 +84,10 @@
                 </div>
                 <a class="nav-item nav-link" href="{{ url_for('main.show_notifications', filter='unread') }}">
                     <span class="oi oi-bell"></span>
-                    {% if notifications.count() != 0 %}
-                        <span class="badge badge-danger badge-notification">{{ notification_count }}</span>
-                    {% endif %}
+                    <span id="notification-badge" class="{% if notification_count == 0 %}
+                        hide{% endif %}badge badge-danger badge-notification"
+                        data-href="{{ url_for('ajax.notification_count') }}">{{ notification_count }}
+                    </span>
                 </a>
             </div>
         </nav>

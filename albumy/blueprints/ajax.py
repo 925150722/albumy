@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, jsonify
 from flask_login import current_user
-from albumy.models import User
+from albumy.models import User, Notification
 
 
 ajax_bp = Blueprint('ajax', __name__)
@@ -8,7 +8,10 @@ ajax_bp = Blueprint('ajax', __name__)
 
 @ajax_bp.route('/notifications_count')
 def notifications_count():
-    return 'notifications_count'
+    if not current_user.is_authenticated:
+        return jsonify(message='Login required.'), 403
+    count = Notification.query.with_parent(current_user).filter_by(is_read=False).count()
+    return jsonify(count=count)
 
 
 @ajax_bp.route('/profile/<int:user_id>')
