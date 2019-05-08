@@ -44,6 +44,8 @@ class BaseConfig:
     ALBUMY_PHOTO_PER_PAGE = 12
     ALBUMY_USER_PER_PAGE = 12
 
+    ALBUMY_NOTIFICATION_PER_PAGE = 10
+
 
 class DevelopmentConfig(BaseConfig):
     SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(basedir, 'data-dev.db')

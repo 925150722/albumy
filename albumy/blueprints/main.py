@@ -3,8 +3,9 @@ import os
 from flask import Blueprint, request, current_app, render_template, send_from_directory, flash, redirect, url_for, abort
 from flask_dropzone import random_filename
 from flask_login import login_required, current_user
+from sqlalchemy.sql import func
 from albumy.decorators import confirm_required, permission_required
-from albumy.models import Photo, Tag, Comment, Collect, Notification
+from albumy.models import Photo, Tag, Comment, Collect, Notification, Follow
 from albumy.extensions import db
 from albumy.utils import resize_image, flash_errors
 from albumy.forms.main import DescriptionForm, TagForm, CommentForm
@@ -16,7 +17,17 @@ main_bp = Blueprint('main', __name__)
 
 @main_bp.route('/')
 def index():
-    return '1111'
+    if current_user.is_authenticated:
+        followed_photos = Photo.query.join(Follow, Follow.followed_id == Photo.author_id).\
+            filter(Follow.followed_id == current_user.id).order_by(Photo.timestamp.desc())
+        page = request.args.get('page', 1, type=int)
+        pagination = followed_photos.paginate(page, per_page=current_app.config['ALBUMY_PHOTO_PER_PAGE'])
+        photos = pagination.items
+    else:
+        pagination = None
+        photos = None
+    tags = Tag.query.join(Tag.photos).group_by(Tag.id).order_by(func.count(Photo.id)).limit(10)
+    return render_template('main/index.html', pagination=pagination, photos=photos, tags=tags)
 
 
 @main_bp.route('/explore')
@@ -270,7 +281,8 @@ def collect(photo_id):
         return redirect(url_for('.show_photo', photo_id=photo_id))
 
     current_user.collect(photo)
-    push_collect_notification(collector=current_user, photo_id=photo_id, receiver=photo.user)
+    if current_user.receiver_collect:
+        push_collect_notification(collector=current_user, photo_id=photo_id, receiver=photo.user)
     flash('Photo collected.', 'success')
     return redirect(url_for('.show_photo', photo_id=photo_id))
 
@@ -304,7 +316,7 @@ def show_collectors(photo_id):
 @login_required
 def show_notifications():
     page = request.args.get('page', 1, type=int)
-    per_page = current_app.congif['ALBUMY_NOTIFICATION_PER_PAGE']
+    per_page = current_app.config['ALBUMY_NOTIFICATION_PER_PAGE']
     notifications = Notification.query.with_parent(current_user)
     filter_rule = request.args.get('filter')
     if filter_rule == 'unread':
@@ -332,3 +344,4 @@ def read_all_notifications():
     db.session.commit()
     flash('All notification archived.', 'success')
     return redirect(url_for('.show_notifications'))
+

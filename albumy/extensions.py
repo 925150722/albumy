@@ -26,6 +26,8 @@ avatars = Avatars()
 login_manager.login_view = 'auth.login'
 login_manager.login_message_category = 'warning'
 login_manager.login_message = '请先登录'
+login_manager.refresh_view = 'auth.re_authenticate'
+login_manager.needs_refresh_message = u'为了保护你的账号安全, 请重新登陆'
 
 
 @login_manager.user_loader

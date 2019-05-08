@@ -1,6 +1,6 @@
 
 from flask import Blueprint, url_for, redirect, flash, render_template
-from flask_login import current_user, login_required, login_user, logout_user
+from flask_login import current_user, login_required, login_user, logout_user, login_fresh, confirm_login
 from albumy.models import User
 from albumy.extensions import db
 from albumy.forms.auth import RegisterForm, ForgetPasswordForm, ResetPasswordForm, LoginForm
@@ -120,3 +120,16 @@ def logout():
     logout_user()
     flash('Logout success.', 'info')
     return redirect_back()
+
+
+@auth_bp.route('/re-authenticate', methods=['GET', 'POST'])
+def re_authenticate():
+    if login_fresh():
+        return redirect(url_for('main.index'))
+    form = LoginForm()
+
+    if form.validate_on_submit() and current_user.validate_password(form.password.data):
+        confirm_login()
+        return redirect_back()
+
+    return render_template('auth/login.html', form=form)

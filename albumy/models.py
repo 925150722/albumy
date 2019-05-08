@@ -30,10 +30,15 @@ class User(db.Model, UserMixin):
     avatar_s = db.Column(db.String(64))
     avatar_m = db.Column(db.String(64))
     avatar_l = db.Column(db.String(64))
+    avatar_raw = db.Column(db.String(64))
+
     member = db.Column(db.DateTime, default=datetime.utcnow)
 
     confirmed = db.Column(db.Boolean, default=False)
+    show_collections = db.Column(db.Boolean, default=True)
     receive_comment_notification = db.Column(db.Boolean)
+    receive_follow_notification = db.Column(db.Boolean)
+    receive_collect_notification = db.Column(db.Boolean)
 
     role_id = db.Column(db.Integer, db.ForeignKey('role.id'))
     role = db.relationship('Role', back_populates='users')
@@ -232,3 +237,10 @@ def delete_photos(**kwargs):
                 os.remove(path)
 
 
+@db.event.listens_for(User, 'after_delete', named=True)
+def delete_avatars(**kwargs):
+    target = kwargs['target']
+    for filename in [target.avatar_s, target.avatar_m, target.avatar_l, target.avatar_raw]:
+        path = os.path.join(current_app.config['ALBUMY_SAVE_PATH'], filename)
+        if os.path.exists(path):
+            os.remove(path)
