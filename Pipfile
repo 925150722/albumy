@@ -24,6 +24,7 @@ flask-login = "*"
 flask-dropzone = "*"
 pillow = "*"
 flask-avatars = "*"
+flask-whooshee = "*"
 
 [requires]
 python_version = "3.6"

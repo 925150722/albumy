@@ -46,6 +46,8 @@ class BaseConfig:
 
     ALBUMY_NOTIFICATION_PER_PAGE = 10
 
+    WHOOSHEE_MIN_STRING_LEN = 1
+
 
 class DevelopmentConfig(BaseConfig):
     SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(basedir, 'data-dev.db')

@@ -5,9 +5,9 @@ from flask_dropzone import random_filename
 from flask_login import login_required, current_user
 from sqlalchemy.sql import func
 from albumy.decorators import confirm_required, permission_required
-from albumy.models import Photo, Tag, Comment, Collect, Notification, Follow
+from albumy.models import Photo, Tag, Comment, Collect, Notification, Follow, User
 from albumy.extensions import db
-from albumy.utils import resize_image, flash_errors
+from albumy.utils import resize_image, flash_errors, redirect_back
 from albumy.forms.main import DescriptionForm, TagForm, CommentForm
 from albumy.notifications import push_comment_notification, push_collect_notification
 
@@ -32,12 +32,28 @@ def index():
 
 @main_bp.route('/explore')
 def explore():
-    return 'explore'
+    photos = Photo.query.order_by(func.random()).limit(12)
+    return render_template('main/explore.html', photos=photos)
 
 
 @main_bp.route('/search')
 def search():
-    return 'search'
+    q = request.args.get('q', '')
+    if q == '':
+        flash('Enter keyword about photo, user or tag.', 'warning')
+        return redirect_back()
+
+    category = request.args.get('category', 'photo')
+    page = request.args.get('page', 1, type=int)
+    per_page = current_app.config['ALBUMY_SEARCH_RESULT_PER_PAGE']
+    if category == 'user':
+        pagination = User.query.whooshee_search(q).paginate(page, per_page)
+    elif category == 'tag':
+        pagination = Tag.query.whooshee_search(q).paginate(page, per_page)
+    else:
+        pagination = Photo.query.whooshee_search(q).paginate(page, per_page)
+    results = pagination.items
+    return render_template('main/search.html', q=q, category=category, pagination=pagination, results=results)
 
 
 @main_bp.route('/upload', methods=['GET', 'POST'])
@@ -343,5 +359,14 @@ def read_all_notifications():
         notification.is_read = True
     db.session.commit()
     flash('All notification archived.', 'success')
+    return redirect(url_for('.show_notifications'))
+
+
+@main_bp.route('/notifications/read/all')
+def read_all_notification():
+    for notification in current_user.notifications:
+        notification.is_read = True
+    db.session.commit()
+    flash('All notifications archived.', 'success')
     return redirect(url_for('.show_notifications'))
 

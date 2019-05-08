@@ -10,6 +10,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import AnonymousUserMixin
 from flask_dropzone import Dropzone
 from flask_avatars import Avatars
+from flask_whooshee import Whooshee
 
 
 mail = Mail()
@@ -22,6 +23,7 @@ migrate = Migrate(db=db)
 login_manager = LoginManager()
 dropzone = Dropzone()
 avatars = Avatars()
+whooshee = Whooshee()
 
 login_manager.login_view = 'auth.login'
 login_manager.login_message_category = 'warning'
