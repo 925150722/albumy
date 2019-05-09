@@ -40,6 +40,8 @@ class User(db.Model, UserMixin):
     receive_comment_notification = db.Column(db.Boolean)
     receive_follow_notification = db.Column(db.Boolean)
     receive_collect_notification = db.Column(db.Boolean)
+    locked = db.Column(db.Boolean, default=False)
+    active = db.Column(db.Boolean, default=False)
 
     role_id = db.Column(db.Integer, db.ForeignKey('role.id'))
     role = db.relationship('Role', back_populates='users')
@@ -122,6 +124,28 @@ class User(db.Model, UserMixin):
 
     def is_followed_by(self, user):
         return self.followers.filter_by(follower_id=user.id).first() is not None
+
+    def lock(self):
+        self.locked = True
+        self.role = Role.query.filter_by(name='Locked').first()
+        db.session.commit()
+
+    def unlock(self):
+        self.locked = False
+        self.role = Role.query.filter_by(name='User').first()
+        db.session.commit()
+
+    @property
+    def is_active(self):
+        return self.active
+
+    def block(self):
+        self.active = True
+        db.session.commit()
+
+    def unblock(self):
+        self.active = False
+        db.session.commit()
 
 
 class Collect(db.Model):

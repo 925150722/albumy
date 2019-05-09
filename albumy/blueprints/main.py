@@ -128,7 +128,7 @@ def photo_previous(photo_id):
 @main_bp.route('/delete/photo/<int:photo_id>', methods=['POST'])
 def delete_photo(photo_id):
     photo = Photo.query.get_or_404(photo_id)
-    if current_user != photo.author:
+    if current_user != photo.author and not current_user.can('MODERATE'):
         abort(403)
     db.session.delete(photo)
     db.session.commit()

@@ -24,9 +24,12 @@ def login():
         user = User.query.filter_by(username=username).first()
         if user:
             if user.validate_password(password):
-                login_user(user, remember)
-                flash('Welcome back.', 'info')
-                return redirect_back()
+                if login_user(user, remember):
+                    flash('Welcome back.', 'info')
+                    return redirect_back()
+                else:
+                    flash('Your account is blocked.', 'warning')
+                    return redirect(url_for('main.index'))
             flash('Invalid username or password.', 'warning')
         else:
             flash('No account.', 'warning')
